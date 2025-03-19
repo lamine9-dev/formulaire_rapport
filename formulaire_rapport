@@ -8,10 +8,28 @@ export default function EquipmentReportForm() {
     comment: "",
   });
 
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+
   const teams = [
-    "AKC-BONAPRISO", "AKC-AKWA", "AKC-BALI", "AKC-MIXTE", "AKN-MAKEPE",
-    "AKN-BONAMOUSSADI", "AKN-NKOTTO", "AKN-4", "BSA-PALMIERS", "BSA-VILLAGE",
-    "BSA-DAKAR", "BPD-1", "BPD-2", "BPD-3", "BBR-1(MANDENG)", "BBR-2", "BBR-3"
+    "AKC-BONAPRISO",
+    "AKC-AKWA",
+    "AKC-BALI",
+    "AKC-MIXTE",
+    "AKN-MAKEPE",
+    "AKN-BONAMOUSSADI",
+    "AKN-NKOTTO",
+    "AKN-4",
+    "BSA-PALMIERS",
+    "BSA-VILLAGE",
+    "BSA-DAKAR",
+    "BPD-1",
+    "BPD-2",
+    "BPD-3",
+    "BBR-1(MANDENG)",
+    "BBR-2",
+    "BBR-3",
   ];
 
   const handleChange = (e) => {
@@ -19,91 +37,130 @@ export default function EquipmentReportForm() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setErrorMessage("");
+    setSuccessMessage("");
+
     if (!/^\d{9}$/.test(formData.phoneNumber)) {
-      alert("Le numéro de téléphone doit contenir exactement 9 chiffres.");
+      setErrorMessage("Le numéro de téléphone doit contenir exactement 9 chiffres.");
+      setLoading(false);
       return;
     }
-    console.log("Form submitted:", formData);
-    // Ici, tu peux envoyer les données au serveur via une API
+
+    try {
+      const response = await fetch("http://localhost:5000/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de l'envoi des données.");
+      }
+
+      setSuccessMessage("Rapport envoyé avec succès !");
+      setFormData({ teamName: "", phoneNumber: "", status: "online", comment: "" });
+    } catch (error) {
+      setErrorMessage(error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 bg-white shadow-lg rounded-xl">
-      <h2 className="text-xl font-semibold mb-4">Rapport d'Équipement</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="max-w-lg mx-auto mt-10 p-8 bg-white shadow-2xl rounded-xl border border-blue-100">
+      <h2 className="text-3xl font-bold text-blue-800 mb-8 text-center">
+        Rapport d'Équipement
+      </h2>
+      {errorMessage && <p className="text-red-600 text-center mb-4">{errorMessage}</p>}
+      {successMessage && <p className="text-green-600 text-center mb-4">{successMessage}</p>}
+      <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block text-gray-700">Nom de l'équipe</label>
+          <label className="block text-lg font-medium text-blue-700 mb-3">
+            Nom de l'équipe
+          </label>
           <select
             name="teamName"
             value={formData.teamName}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border border-blue-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 text-lg"
             required
           >
             <option value="">Sélectionner une équipe</option>
             {teams.map((team) => (
-              <option key={team} value={team}>{team}</option>
+              <option key={team} value={team} className="text-blue-900">
+                {team}
+              </option>
             ))}
           </select>
         </div>
 
         <div>
-          <label className="block text-gray-700">Numéro de téléphone</label>
+          <label className="block text-lg font-medium text-blue-700 mb-3">
+            Numéro de téléphone
+          </label>
           <input
             type="text"
             name="phoneNumber"
             value={formData.phoneNumber}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
-            required
+            className="w-full p-3 border border-blue-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 text-lg"
           />
         </div>
 
         <div>
-          <label className="block text-gray-700">Statut</label>
-          <div className="flex gap-4">
-            <label className="flex items-center">
+          <label className="block text-lg font-medium text-blue-700 mb-3">
+            Statut
+          </label>
+          <div className="flex gap-6">
+            <label className="flex items-center space-x-2">
               <input
                 type="radio"
                 name="status"
                 value="online"
                 checked={formData.status === "online"}
                 onChange={handleChange}
-                className="mr-2"
+                className="form-radio h-5 w-5 text-blue-600"
               />
-              Online
+              <span className="text-blue-800 text-lg">Online</span>
             </label>
-            <label className="flex items-center">
+            <label className="flex items-center space-x-2">
               <input
                 type="radio"
                 name="status"
                 value="offline"
                 checked={formData.status === "offline"}
                 onChange={handleChange}
-                className="mr-2"
+                className="form-radio h-5 w-5 text-blue-600"
               />
-              Offline
+              <span className="text-blue-800 text-lg">Offline</span>
             </label>
           </div>
         </div>
 
         <div>
-          <label className="block text-gray-700">Commentaire</label>
+          <label className="block text-lg font-medium text-blue-700 mb-3">
+            Commentaire
+          </label>
           <textarea
             name="comment"
             value={formData.comment}
             onChange={handleChange}
-            className="w-full p-2 border rounded"
+            className="w-full p-3 border border-blue-200 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition duration-200 text-lg"
+            rows="4"
+            placeholder="Ajoutez un commentaire..."
+            style={{ resize: "vertical" }}
           ></textarea>
         </div>
 
         <button
           type="submit"
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+          className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 text-lg"
+          disabled={loading}
         >
-          Soumettre
+          {loading ? "Envoi en cours..." : "Soumettre"}
         </button>
       </form>
     </div>
